@@ -86,13 +86,11 @@ void pop() {
     if(top >= 0 && reservationCount > 0) {
         Reservation removed = stack[top--];
 
-        // Find and remove from reservations list
         for(int i = 0; i < reservationCount; i++) {
             if(strcmp(reservations[i].name, removed.name) == 0 &&
                reservations[i].table == removed.table &&
                reservations[i].timeIndex == removed.timeIndex) {
 
-                // Shift elements left
                 for(int j = i; j < reservationCount - 1; j++)
                     reservations[j] = reservations[j + 1];
 
@@ -108,7 +106,6 @@ void pop() {
 }
 
 // ================= QUEUE (ORDER PROCESSING) =================
-// Add order to queue
 void enqueue(Order o) {
     if(rear == MAX-1) {
         printf("Queue Full\n");
@@ -118,7 +115,6 @@ void enqueue(Order o) {
     orders[++rear] = o;
 }
 
-// Process order from queue
 void dequeue() {
     if(front == -1 || front > rear) {
         printf("No orders\n");
@@ -132,14 +128,12 @@ void dequeue() {
 
     front++;
 
-    // Reset queue if empty
     if(front > rear) {
         front = rear = -1;
     }
 }
 
 // ================= SEARCH =================
-// Search reservation by name (case-insensitive)
 void searchReservation() {
     char name[MAX_NAME], temp[MAX_NAME];
 
@@ -167,7 +161,6 @@ void searchReservation() {
 }
 
 // ================= SORTING =================
-// Sort reservations alphabetically by name
 void sortByName() {
     for(int i = 0; i < reservationCount - 1; i++) {
         for(int j = 0; j < reservationCount - i - 1; j++) {
@@ -181,7 +174,6 @@ void sortByName() {
     printf("Sorted by name!\n");
 }
 
-// Sort reservations by time slot
 void sortByTime() {
     for(int i = 0; i < reservationCount - 1; i++) {
         for(int j = 0; j < reservationCount - i - 1; j++) {
@@ -196,7 +188,6 @@ void sortByTime() {
 }
 
 // ================= MENU =================
-// Display drink menu
 void showMenu() {
     printf("\n===== MENU =====\n");
     printf("1. Iced Lemonade - 45\n");
@@ -207,7 +198,6 @@ void showMenu() {
     printf("0. Done\n");
 }
 
-// Return price based on item number
 int price(int item) {
     switch(item) {
         case 1: return 45;
@@ -220,7 +210,6 @@ int price(int item) {
 }
 
 // ================= TIME DISPLAY =================
-// Show all available time slots
 void showTimeSlots() {
     printf("\n===== TIME SLOTS =====\n");
     for(int i = 0; i < TIME_SLOTS; i++) {
@@ -231,7 +220,6 @@ void showTimeSlots() {
 // ================= ADD RESERVATION =================
 void addReservation() {
 
-    // Prevent overflow
     if(reservationCount >= MAX) {
         printf("Reservation list is full!\n");
         return;
@@ -240,7 +228,6 @@ void addReservation() {
     Reservation r;
     char buffer[10];
 
-    // Input name
     printf("Enter name: ");
     fgets(r.name, sizeof(r.name), stdin);
     r.name[strcspn(r.name,"\n")] = 0;
@@ -250,7 +237,6 @@ void addReservation() {
         return;
     }
 
-    // Input table number with validation
     char tableInput[10];
     int valid = 0;
 
@@ -280,7 +266,6 @@ void addReservation() {
             valid = 1;
     }
 
-    // Select time slot
     showTimeSlots();
     printf("Enter NUMBER (1-14): ");
 
@@ -309,13 +294,11 @@ void addReservation() {
 
     r.timeIndex = timeChoice - 1;
 
-    // Check if slot is taken
     if(isSlotTaken(r.table, r.timeIndex)) {
         printf("Slot already taken!\n");
         return;
     }
 
-    // Save reservation
     reservations[reservationCount++] = r;
     push(r);
 
@@ -323,7 +306,6 @@ void addReservation() {
 }
 
 // ================= DISPLAY =================
-// Show all reservations
 void showReservations() {
     printf("\n===== RESERVATIONS =====\n");
 
@@ -351,7 +333,6 @@ void placeOrder() {
     fgets(o.name, sizeof(o.name), stdin);
     o.name[strcspn(o.name,"\n")] = 0;
 
-    // Check if customer has reservation
     char tempInput[MAX_NAME], tempStored[MAX_NAME];
     int found = 0;
 
@@ -373,7 +354,6 @@ void placeOrder() {
         return;
     }
 
-    // Menu loop
     while(1) {
         showMenu();
         printf("Choice: ");
@@ -396,7 +376,6 @@ void placeOrder() {
         else printf("Invalid choice!\n");
     }
 
-    // Prevent empty order
     if(total == 0) {
         printf("No items selected. Order cancelled.\n");
         return;
@@ -427,11 +406,36 @@ int main() {
         printf("7. Sort Reservations\n");
         printf("0. Exit\n");
 
-        printf("Choice: ");
-        scanf("%d", &choice);
+        // ===== FIXED INPUT (ADDED VALIDATION) =====
+        char input[10];              // buffer for input
+        int validChoice = 0;         // flag for validation
 
-        int c;
-        while ((c = getchar()) != '\n' && c != EOF);
+        while(!validChoice) {
+            printf("Choice: ");
+            fgets(input, sizeof(input), stdin);
+            input[strcspn(input, "\n")] = 0;
+
+            int isNumber = 1;
+            for(int i = 0; input[i]; i++) {
+                if(!isdigit(input[i])) {
+                    isNumber = 0;
+                    break;
+                }
+            }
+
+            if(!isNumber) {
+                printf("INVALID INPUT! Numbers only.\n");
+                continue;
+            }
+
+            choice = atoi(input);
+
+            if(choice < 0 || choice > 7) {
+                printf("INVALID CHOICE! Select 0-7 only.\n");
+            } else {
+                validChoice = 1;
+            }
+        }
 
         switch(choice) {
             case 1: addReservation(); break;
@@ -442,13 +446,39 @@ int main() {
             case 6: searchReservation(); break;
 
             case 7:
-                printf("1. Sort by Name\n2. Sort by Time\nChoice: ");
-                scanf("%d", &sortChoice);
-                while ((c = getchar()) != '\n' && c != EOF);
+                // ===== FIXED SORT INPUT =====
+                char sortInput[10];
+                int validSort = 0;
+
+                while(!validSort) {
+                    printf("1. Sort by Name\n2. Sort by Time\nChoice: ");
+                    fgets(sortInput, sizeof(sortInput), stdin);
+                    sortInput[strcspn(sortInput, "\n")] = 0;
+
+                    int isNumber = 1;
+                    for(int i = 0; sortInput[i]; i++) {
+                        if(!isdigit(sortInput[i])) {
+                            isNumber = 0;
+                            break;
+                        }
+                    }
+
+                    if(!isNumber) {
+                        printf("INVALID INPUT! Numbers only.\n");
+                        continue;
+                    }
+
+                    sortChoice = atoi(sortInput);
+
+                    if(sortChoice == 1 || sortChoice == 2) {
+                        validSort = 1;
+                    } else {
+                        printf("INVALID CHOICE! Only 1 or 2 allowed.\n");
+                    }
+                }
 
                 if(sortChoice == 1) sortByName();
-                else if(sortChoice == 2) sortByTime();
-                else printf("Invalid choice\n");
+                else sortByTime();
                 break;
 
             case 0: printf("Exiting...\n"); break;
